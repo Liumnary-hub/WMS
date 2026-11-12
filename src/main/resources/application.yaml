@@ -1,0 +1,36 @@
+server:
+  port: 8088
+spring:
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    protocol: smtp
+    default-encoding: UTF-8
+    #发件人
+    username: ${MAIL_USERNAME:}
+    #授权码
+    password: ${MAIL_PASSWORD:}
+    port: 465
+    properties:
+      mail:
+        debug: true
+        smtp:
+          ssl:
+            enable: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/wmsadmin?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: true
+#设置日志级别会给root根节点设置，代表整体应用的级别
+logging:
+  level:
+    root: info
+
+#MES调用WMS开放接口的共享密钥
+integration:
+  api-key: ${INTEGRATION_API_KEY:mes-wms-dev-key}
