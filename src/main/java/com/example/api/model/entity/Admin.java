@@ -1,5 +1,6 @@
 package com.example.api.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +29,8 @@ public class Admin {
     @Column(columnDefinition = "varchar(30) default 'LTD' not null")
     private String email;
 
-    @Column(columnDefinition = "varchar(30) default 'LTD' not null")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(length = 100, nullable = false)
     private String password;
 
     private String roles;

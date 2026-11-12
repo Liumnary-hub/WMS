@@ -13,11 +13,15 @@ import com.example.api.utils.JwtTokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,15 +41,34 @@ public class AdminController {
     @Resource
     private LoginLogService loginLogService;
 
+    @Value("${admin.init-token:}")
+    private String initToken;
+
     @GetMapping("hasInit")
     public boolean hasInit() {
         return adminRepository.existsAdminByRoles(Role.ROLE_SUPER_ADMIN.getValue());
     }
 
     @PostMapping("/init")
-    public Admin init(@RequestBody Admin admin) throws Exception {
+    public Admin init(@RequestHeader(value = "X-Init-Token", required = false) String token,
+                      @RequestBody Admin admin) throws Exception {
+        if (adminRepository.existsAdminByRoles(Role.ROLE_SUPER_ADMIN.getValue())) {
+            throw new Exception("系统已初始化");
+        }
+        if (!StringUtils.hasText(initToken) || !matches(token, initToken)) {
+            throw new Exception("初始化令牌错误");
+        }
         admin.setRoles(Role.ROLE_SUPER_ADMIN.getValue());
         return adminService.save(admin);
+    }
+
+    private boolean matches(String actual, String expected) {
+        if (actual == null || expected == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                actual.getBytes(StandardCharsets.UTF_8),
+                expected.getBytes(StandardCharsets.UTF_8));
     }
 
     @GetMapping("")

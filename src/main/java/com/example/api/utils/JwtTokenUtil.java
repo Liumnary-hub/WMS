@@ -1,12 +1,11 @@
 package com.example.api.utils;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public final class JwtTokenUtil {
     //在request的header中的名字
@@ -29,20 +28,13 @@ public final class JwtTokenUtil {
 
     //检验token是否合法
     public static boolean checkToken(String token) {
-        if ("null".equals(token) || token == null || "".equals(token)){
-            System.out.println("token为空");
-            return false;
-        }
-        return token.startsWith(PREFIX);
+        return token != null && !"null".equals(token) && !token.isEmpty() && token.startsWith(PREFIX);
     }
 
     /**
      * 生成Token
      */
     public static String createToken(String username, String[] roles, long expiration) {
-        System.out.println("---------------------------");
-        System.out.println("username:"+username);
-        System.out.println("-----------------------");
         Map<String, Object> map = new HashMap<>();
         map.put(ROLE_CLAIMS, roles);
         return PREFIX + Jwts.builder()
@@ -65,20 +57,16 @@ public final class JwtTokenUtil {
                     .setSigningKey(APP_SECRET)
                     .parseClaimsJws(token)
                     .getBody();
-        } catch (ExpiredJwtException e) {
-            e.printStackTrace();
+        } catch (JwtException | IllegalArgumentException e) {
+            //过期、签名错误、格式错误统一按无效令牌处理
         }
         return claims;
     }
 
     /** 从Token中获取username */
     public static String getUsername(String token) {
-        System.out.println("----gettoken----");
-        System.out.println(getTokenClaims(token));
-        System.out.println("-------------");
-        System.out.println(getTokenClaims(token).getSubject());
-        System.out.println("-------------");
-        return getTokenClaims(token).getSubject();
+        Claims claims = getTokenClaims(token);
+        return claims != null ? claims.getSubject() : null;
     }
 
     /**
@@ -86,14 +74,12 @@ public final class JwtTokenUtil {
      */
     public static List<String> getTokenRoles(String token) {
         List<String> roles = new ArrayList<>();
-        Object object = getTokenClaims(token).get(ROLE_CLAIMS);
+        Claims claims = getTokenClaims(token);
+        Object object = claims != null ? claims.get(ROLE_CLAIMS) : null;
         if (object instanceof ArrayList<?>) {
             for (Object o : (List<?>) object) {
                 roles.add((String) o);
             }
-        }
-        for (String role : roles) {
-            System.out.println(role);
         }
         return roles;
     }
@@ -102,7 +88,9 @@ public final class JwtTokenUtil {
      * 校验Token是否过期
      */
     public static boolean isExpiration(String token) {
-        return getTokenClaims(token).getExpiration().before(new Date());
+        Claims claims = getTokenClaims(token);
+        return claims == null || claims.getExpiration() == null
+                || claims.getExpiration().before(new Date());
     }
 
 }

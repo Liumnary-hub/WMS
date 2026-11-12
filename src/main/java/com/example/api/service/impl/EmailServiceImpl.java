@@ -4,6 +4,7 @@ import com.example.api.model.entity.Code;
 import com.example.api.repository.CodeRepository;
 import com.example.api.service.EmailService;
 import com.example.api.utils.RandomUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
+@Slf4j
 @Service
 public class EmailServiceImpl implements EmailService {
 
@@ -32,18 +34,17 @@ public class EmailServiceImpl implements EmailService {
         message.setTo(email);
         //设置标题
         message.setSubject("验证码");
-        String value = "123456";
+        String value = RandomUtil.next();
         message.setText("你的验证码为:  " + value + "  十五分钟内有效");
         try {
-//            mailSender.send(message);
-        }catch (Exception e){
-            e.printStackTrace();
+            mailSender.send(message);
+        } catch (Exception e) {
+            log.error("发送验证码邮件失败, email: {}", email, e);
             return false;
         }
-        //保存验证码
+        //邮件发送成功后才保存验证码
         //同一主键的email为update操作
         codeRepository.save(new Code(email, value));
-        System.out.println("执行save code");
         return true;
     }
 

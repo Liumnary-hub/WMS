@@ -10,7 +10,9 @@ import com.example.api.service.AdminService;
 import com.example.api.service.EmailService;
 import com.example.api.utils.DataTimeUtil;
 import com.example.api.utils.JwtTokenUtil;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -25,9 +27,16 @@ public class AdminServiceImpl implements AdminService {
     @Resource
     private EmailService emailService;
 
+    @Resource
+    private BCryptPasswordEncoder passwordEncoder;
+
     @Override
     public Admin save(Admin admin) throws Exception {
-        if (admin.getEmail().length() < 8 || admin.getPassword().length() < 5) throw new Exception("请求参数异常");
+        if (!StringUtils.hasText(admin.getEmail()) || admin.getEmail().length() < 8
+                || !StringUtils.hasText(admin.getPassword()) || admin.getPassword().length() < 5) {
+            throw new Exception("请求参数异常");
+        }
+        admin.setPassword(passwordEncoder.encode(admin.getPassword()));
         admin.setCreateAt(DataTimeUtil.getNowTimeString());
         return adminRepository.save(admin);
     }
@@ -46,11 +55,29 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Admin loginByPassword(LoginDto dto) throws Exception {
-        Admin one = adminRepository.findAdminByEmailAndPassword(dto.getEmail(), dto.getPassword());
-        if (one == null) {
+        Admin admin = adminRepository.findFirstByEmail(dto.getEmail());
+        if (admin == null || !StringUtils.hasText(admin.getPassword())
+                || !StringUtils.hasText(dto.getPassword())) {
             throw new Exception("邮箱或密码错误");
         }
-        return one;
+
+        String stored = admin.getPassword();
+        boolean matched;
+        if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+            matched = passwordEncoder.matches(dto.getPassword(), stored);
+        } else {
+            //兼容历史明文密码，登录成功后自动升级为BCrypt
+            matched = stored.equals(dto.getPassword());
+            if (matched) {
+                admin.setPassword(passwordEncoder.encode(dto.getPassword()));
+                adminRepository.save(admin);
+            }
+        }
+
+        if (!matched) {
+            throw new Exception("邮箱或密码错误");
+        }
+        return admin;
     }
 
     @Override

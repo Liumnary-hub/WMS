@@ -34,3 +34,10 @@ logging:
 #MES调用WMS开放接口的共享密钥
 integration:
   api-key: ${INTEGRATION_API_KEY:mes-wms-dev-key}
+
+#首次创建超级管理员必须携带 X-Init-Token，未配置则禁止初始化
+admin:
+  init-token: ${ADMIN_INIT_TOKEN:}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}

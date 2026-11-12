@@ -1,14 +1,15 @@
 package com.example.api.utils;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 public final class RandomUtil {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     public static String next() {
         StringBuilder builder = new StringBuilder();
-        Random random = new Random();
         for (int i = 0; i < 6; i++) {
-            builder.append(random.nextInt(10));
+            builder.append(RANDOM.nextInt(10));
         }
         return builder.toString();
     }

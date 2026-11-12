@@ -1,12 +1,14 @@
 package com.example.api.utils;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
 public final class ResponseUtil {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static void writeJson(HttpServletResponse response, Object o) {
         response.setHeader("Access-Control-Allow-Origin", "*");
@@ -18,7 +20,7 @@ public final class ResponseUtil {
         response.setStatus(200);
         try{
             PrintWriter writer = response.getWriter();
-            writer.write(JSON.toJSONString(o));
+            writer.write(MAPPER.writeValueAsString(o));
             writer.flush();
             writer.close();
         }catch (IOException e) {
